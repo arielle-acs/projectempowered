@@ -1,0 +1,99 @@
+---
+title: "Data Cleaning"
+format: html
+editor: visual
+---
+
+```{r load packages and data}
+if(!require(readr)){install.packages('readr')}
+library(readr)
+if(!require(tidyverse)){install.packages('tidyverse')}
+library(tidyverse)
+if(!require(MOTE)){install.packages('MOTE')}
+library(MOTE)
+
+knitr::opts_knit$set(root.dir = "/Volumes/fsmresfiles/MSS/Schleider_Lab/jslab/Project Empower-ED")
+setwd("/Volumes/fsmresfiles/MSS/Schleider_Lab/jslab/Project Empower-ED")
+
+baseline_english <- read_csv("Data/baseline_english.csv", col_types = cols(.default = "c"))
+baseline_spanish <- read_csv("Data/baseline_spanish.csv", col_types = cols(.default = "c"))
+#When combining data, it is easiest to import everything as characters using readr and change specified variables to numeric later
+```
+
+```{r merge data}
+#First, need to make sure we can identify English and Spanish completers 
+baseline_english <- baseline_english %>%
+  mutate(language = "English")
+baseline_spanish <- baseline_spanish %>%
+  mutate(language = "Spanish")
+
+#Now merge 
+baseline_data <- bind_rows(baseline_english,  baseline_spanish)
+baseline_data$Participant_ID <- as.character(baseline_data$Participant_ID)
+
+#Identify included participants based on IDs in tracking document
+Participant_ID <- c(744436,7086469964,961081,7734501461,7739367698,937934,513324,269847,258529,542167,114943,774126,217386,271778,420465,118411,690997,655742,169397,644159,961945,728872,338524,721916,392330)
+included_participants <- data.frame(Participant_ID)
+included_participants$Participant_ID <- as.character(included_participants$Participant_ID)
+
+#Make a dataframe with just the included participants
+filtered_baseline_data <- included_participants %>%
+  left_join(baseline_data, by = "Participant_ID", relationship = "one-to-one")
+```
+
+```{r transforming data}
+#The child gender and treatment history items include all responses from the multiple-select questions in one column. I need to separate them out in order to make them factors. (All other demographics items were made single choice for ease of analysis).
+
+transforming_childgender <- filtered_baseline_data %>% 
+  select(dem_childgender, Participant_ID) %>%
+  separate_rows(dem_childgender, sep = ",") %>%
+  pivot_wider(
+    names_from = dem_childgender,
+    values_from = dem_childgender,
+    values_fill = list(dem_childgender = "0")) %>%
+  mutate(across(-Participant_ID, ~ as.factor(as.numeric(. != "0")))) %>% 
+  rename_with(~ str_c("dem_childgender_", .), -Participant_ID)
+
+transforming_txtype <- filtered_baseline_data %>% 
+  select(dem_txtype, Participant_ID) %>%
+  separate_rows(dem_txtype, sep = ",") %>%
+  pivot_wider(
+    names_from = dem_txtype,
+    values_from = dem_txtype,
+    values_fill = list(dem_txtype = "0")) %>%
+  mutate(across(-Participant_ID, ~ as.factor(as.numeric(. != "0")))) %>% 
+  rename_with(~ str_c("dem_txtype_", .), -Participant_ID)
+
+filtered_baseline_data <- filtered_baseline_data %>%
+  left_join(transforming_childgender, by = "Participant_ID", relationship = "one-to-one") %>%
+  left_join(transforming_txtype, by = "Participant_ID", relationship = "one-to-one")
+
+filtered_baseline_data <- filtered_baseline_data %>% 
+  select(-dem_childgender, -dem_txtype)
+
+#Make all other necessary variables factors
+filtered_baseline_data <- filtered_baseline_data %>% 
+  select(-contains("TEXT")) %>% 
+  mutate(across(c(starts_with("dem_ethnicity"), starts_with("dem_relationship"), starts_with("dem_marital"), starts_with("dem_education"), starts_with("dem_caretaking"), starts_with("dem_live"), starts_with("dem_income"), starts_with("dem_familyhx"), starts_with("dem_childsex"), starts_with("dem_childethnicity"), starts_with("dem_childinsurance"), starts_with("dem_insurancetype"), starts_with("dem_coverage"), starts_with("dem_outofpocket"), starts_with("dem_childEDtx"),  starts_with("dem_medical")),
+                as.factor))
+
+#And I need to make all necessary variables numeric
+filtered_baseline_data <- filtered_baseline_data %>%
+  mutate(across(c(pi_pfs_1:pi_pfs_7,  starts_with("dem_childage"), starts_with("dem_childgrade"),  starts_with("b_AED"), starts_with("b_PEDEQ"),  starts_with("b_PAS"),  starts_with("b_DTS"), starts_with("b_distressnow"), starts_with("pi_PAS"),  starts_with("pi_distressnow")),  
+                as.numeric))
+```
+
+```{r sum scores}
+#All relevant items are already reverse-scored in Qualtrics. For now, just focusing on pre-post data.
+
+filtered_baseline_data <- filtered_baseline_data %>%
+  mutate(b_PAS_sum =  b_PAS_1 + b_PAS_2 + b_PAS_3 + b_PAS_4 + b_PAS_5 + b_PAS_6 + b_PAS_7,
+         pi_PAS_sum = pi_PAS_1 + pi_PAS_2 + pi_PAS_3 + pi_PAS_4 + pi_PAS_5 + pi_PAS_6 + pi_PAS_7,
+         pi_pfs_sum = pi_pfs_1 + pi_pfs_2 + pi_pfs_3 + pi_pfs_4 + pi_pfs_5 + pi_pfs_6 + pi_pfs_7)
+
+#Not summing the current distress items - look at each of those individually
+
+#I'm noticing problematic NAs for 4 rows of participants
+#2 seem to be due to incomplete measures - will likely drop 961945 and 744436 from PAS analysis (rather than impute)
+#2 seem to be due to incorrect IDs (655742 vs 908839; 392330 vs 788668)
+```
