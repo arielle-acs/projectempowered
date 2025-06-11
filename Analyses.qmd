@@ -1,0 +1,391 @@
+---
+title: "Analyses"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup}
+options(digits = 4)
+options(scipen = 999)
+```
+
+```{r descriptive statistics}
+#Parent v anorexia scale overall
+PAS_stats <- filtered_baseline_data %>%
+   drop_na(b_PAS_sum, pi_PAS_sum) %>%  #Two parents did not complete 
+  select(b_PAS_sum, pi_PAS_sum) %>%
+  mutate(PAS_sum_change_pre_post = pi_PAS_sum - b_PAS_sum) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Parent v anorexia scale English
+PAS_stats_english <- filtered_baseline_data %>%
+  filter(language == "English") %>% 
+   drop_na(b_PAS_sum, pi_PAS_sum) %>%  #One parent did not complete 
+  select(b_PAS_sum, pi_PAS_sum) %>%
+  mutate(PAS_sum_change_pre_post = pi_PAS_sum - b_PAS_sum) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Parent v anorexia scale Spanish
+PAS_stats_spanish <- filtered_baseline_data %>%
+  filter(language == "Spanish") %>% 
+   drop_na(b_PAS_sum, pi_PAS_sum) %>%  #One parent did not complete 
+  select(b_PAS_sum, pi_PAS_sum) %>%
+  mutate(PAS_sum_change_pre_post = pi_PAS_sum - b_PAS_sum) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Current distress 1 overall
+distressnow_1_stats <- filtered_baseline_data %>%
+  select(b_distressnow_1, pi_distressnow_1) %>%
+  mutate(distressnow_1_change_pre_post = pi_distressnow_1 - b_distressnow_1) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Current distress 1 English
+distressnow_1_stats_english <- filtered_baseline_data %>%
+   filter(language == "English") %>% 
+  select(b_distressnow_1, pi_distressnow_1) %>%
+  mutate(distressnow_1_change_pre_post = pi_distressnow_1 - b_distressnow_1) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Current distress 1 Spanish
+distressnow_1_stats_spanish <- filtered_baseline_data %>%
+  filter(language == "Spanish") %>% 
+  select(b_distressnow_1, pi_distressnow_1) %>%
+  mutate(distressnow_1_change_pre_post = pi_distressnow_1 - b_distressnow_1) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Current distress 2 overall
+distressnow_2_stats <- filtered_baseline_data %>%
+  select(b_distressnow_2, pi_distressnow_2) %>%
+  mutate(distressnow_2_change_pre_post = pi_distressnow_2 - b_distressnow_2) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Current distress 2 English
+distressnow_2_stats_english <- filtered_baseline_data %>%
+   filter(language == "English") %>% 
+  select(b_distressnow_2, pi_distressnow_2) %>%
+  mutate(distressnow_2_change_pre_post = pi_distressnow_2 - b_distressnow_2) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#Current distress 2 Spanish
+distressnow_2_stats_spanish <- filtered_baseline_data %>%
+  filter(language == "Spanish") %>% 
+  select(b_distressnow_2, pi_distressnow_2) %>%
+  mutate(distressnow_2_change_pre_post = pi_distressnow_2 - b_distressnow_2) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+```
+
+```{r pre to post outcomes}
+#Parent v anorexia scale overall
+t.test(filtered_baseline_data$pi_PAS_sum, filtered_baseline_data$b_PAS_sum, paired = TRUE)
+d.dep.t.diff(mdiff = PAS_stats$PAS_sum_change_pre_post_mean,
+             sddiff = PAS_stats$PAS_sum_change_pre_post_sd,
+             n = PAS_stats$n,
+             a = .05) %>%
+  pluck("estimate")
+
+#Current distress 1 overall
+t.test(filtered_baseline_data$pi_distressnow_1, filtered_baseline_data$b_distressnow_1, paired = TRUE)
+d.dep.t.diff(mdiff = distressnow_1_stats$distressnow_1_change_pre_post_mean,
+             sddiff = distressnow_1_stats$distressnow_1_change_pre_post_sd,
+             n = distressnow_1_stats$n,
+             a = .05) %>%
+  pluck("estimate")
+
+#Current distress 2 overall
+t.test(filtered_baseline_data$pi_distressnow_2, filtered_baseline_data$b_distressnow_2, paired = TRUE)
+d.dep.t.diff(mdiff = distressnow_2_stats$distressnow_2_change_pre_post_mean,
+             sddiff = distressnow_2_stats$distressnow_2_change_pre_post_sd,
+             n = distressnow_2_stats$n,
+             a = .05) %>%
+  pluck("estimate")
+```
+
+```{r acceptability}
+#Acceptability total overall
+filtered_baseline_data %>%
+  summarize(
+    mean_total = mean(pi_pfs_sum),
+    sd_total = sd(pi_pfs_sum),
+    mean_item = mean_total / 7,
+    sd_item = sd_total / 7)
+
+#Acceptability by item overall
+filtered_baseline_data %>%
+  select(pi_pfs_1:pi_pfs_7) %>%
+  pivot_longer(everything()) %>%
+  group_by(name) %>%
+  summarize(mean = mean(value), 
+            sd = sd(value))
+
+#Acceptability total English
+filtered_baseline_data %>%
+  filter(language == "English") %>% 
+  summarize(
+    mean_total = mean(pi_pfs_sum),
+    sd_total = sd(pi_pfs_sum),
+    mean_item = mean_total / 7,
+    sd_item = sd_total / 7)
+
+#Acceptability by item English
+filtered_baseline_data %>%
+   filter(language == "English") %>% 
+  select(pi_pfs_1:pi_pfs_7) %>%
+  pivot_longer(everything()) %>%
+  group_by(name) %>%
+  summarize(mean = mean(value), 
+            sd = sd(value))
+
+#Acceptability total Spanish
+filtered_baseline_data %>%
+  filter(language == "Spanish") %>% 
+  summarize(
+    mean_total = mean(pi_pfs_sum),
+    sd_total = sd(pi_pfs_sum),
+    mean_item = mean_total / 7,
+    sd_item = sd_total / 7)
+
+#Acceptability by item Spanish
+filtered_baseline_data %>%
+   filter(language == "Spanish") %>% 
+  select(pi_pfs_1:pi_pfs_7) %>%
+  pivot_longer(everything()) %>%
+  group_by(name) %>%
+  summarize(mean = mean(value), 
+            sd = sd(value))
+```
+
+```{r patterns of use}
+###Completion of study activities###
+
+baseline_data %>% 
+  select(Participant_ID) %>% 
+  count()
+filtered_baseline_data %>% 
+  select(Participant_ID) %>% 
+  count()
+#28 participants were invited, 25 were compensated/included per completion.
+
+baseline_data %>% 
+  filter(is.na(`Baseline Measures Complete`)) %>% 
+  count()
+baseline_data %>% 
+  filter(is.na(`Intervention Complete`)) %>% 
+  count()
+baseline_data %>% 
+  filter(is.na(`Post-Intervention Measures Complete`)) %>% 
+  count()
+#The 3 participants who were not compensated/included consented but never completed the baseline measures, intervention, or post-intervention measures.
+
+filtered_baseline_data %>% 
+  filter(is.na(`Baseline Measures Complete`)) %>% 
+  count()
+filtered_baseline_data %>% 
+  filter(is.na(`Intervention Complete`)) %>% 
+  count()
+filtered_baseline_data %>% 
+  filter(is.na(`Post-Intervention Measures Complete`)) %>% 
+  count()
+#Verifying that the 25 compensated/included participants passed all checkpoints (they did)
+
+###Duration of SSI###
+
+##Without handling outliers
+names_in_order <- filtered_baseline_data %>%
+  select(ends_with("Page Submit")) %>%
+  names()
+
+#Put mean duration and sd for each page into a new data frame
+page_durations <- filtered_baseline_data %>% 
+  select(ends_with("Page Submit")) %>%
+    mutate(across(everything(), ~ as.numeric(as.character(.)))) %>%
+  pivot_longer(cols = everything(),
+               names_to = "page",
+               values_to = "duration") %>%
+  group_by(page) %>%
+  summarise(mean_duration = mean(duration, na.rm = T),
+            sd_duration = sd(duration,  na.rm = T), .groups = "drop") 
+page_durations #the Mean and SD of seconds spent on each page of the SSI
+
+#Summarize duration
+mean_sd_durations <- page_durations %>%
+  summarize(mean_duration_seconds = sum(mean_duration, na.rm = TRUE), 
+            sd_duration_seconds = sum(sd_duration, na.rm = TRUE), 
+            .groups = "drop") %>%
+  mutate(mean_duration_minutes = mean_duration_seconds / 60,
+         sd_duration_minutes = sd_duration_seconds / 60)
+mean_sd_durations #huge SD even larger than the mean
+
+##With handling outliers
+
+#Look for outliers 
+page_durations_long <- filtered_baseline_data %>% 
+  select(ends_with("Page Submit")) %>%
+  mutate(across(everything(), ~ as.numeric(as.character(.)))) %>%
+  pivot_longer(cols = everything(),
+               names_to = "page",
+               values_to = "duration")
+ggplot(page_durations_long, aes(x = page, y = duration)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 16, outlier.size = 2) +
+  theme_minimal() +
+  labs(title = "Page Durations with Outliers",
+       x = "Page",
+       y = "Duration (seconds)")
+#The data is super skewed with people keeping a page open for 1000+ seconds, so we will log transform it for visual clarity
+ggplot(page_durations_long, aes(x = page, y = log(duration))) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 16, outlier.size = 2) +
+  theme_minimal() +
+  labs(title = "Page Durations with Outliers",
+       x = "Page",
+       y = "Log of Duration (seconds)")
+
+#IQR method on raw data (not log transformed data)
+page_durations_no_outliers <- page_durations_long %>%
+  group_by(page) %>%
+  mutate(
+    Q1 = quantile(duration, 0.25, na.rm = TRUE),
+    Q3 = quantile(duration, 0.75, na.rm = TRUE),
+    IQR = Q3 - Q1,
+    lower = Q1 - 1.5 * IQR,
+    upper = Q3 + 1.5 * IQR) %>%
+  ungroup() %>%
+  filter(duration >= lower & duration <= upper)
+
+page_durations_no_outliers_summary <- page_durations_no_outliers %>%
+  group_by(page) %>%
+  summarize(
+    mean_duration = mean(duration, na.rm = TRUE),
+    sd_duration = sd(duration, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+mean_sd_durations_no_outliers <- page_durations_no_outliers_summary %>%
+  summarize(
+    mean_duration_seconds = sum(mean_duration, na.rm = TRUE), 
+    sd_duration_seconds = sum(sd_duration, na.rm = TRUE)
+  ) %>%
+  mutate(
+    mean_duration_minutes = mean_duration_seconds / 60,
+    sd_duration_minutes = sd_duration_seconds / 60
+  )
+mean_sd_durations_no_outliers
+```
+
+```{r demographics}
+filtered_baseline_data %>%
+  count(dem_ethnicity) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_relationship) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_momdad) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_marital) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_caretaking) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Only asked if dem_caretaking is Yes/1
+filtered_baseline_data %>%
+  count(dem_live) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_income) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_familyhx) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Age as categories
+filtered_baseline_data %>%
+  count(dem_childage) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Age as mean/SD
+filtered_baseline_data %>% 
+  summarise(mean = mean(dem_childage, na.rm = TRUE),
+            sd = sd(dem_childage, na.rm = TRUE))
+
+filtered_baseline_data %>%
+  count(dem_childgrade) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_childsex) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  select(starts_with("dem_childgender")) %>% 
+  summarize(across(everything(), 
+                   list(n = ~ sum(. == 1),
+                        percent = ~ mean(. == 1) * 100))) #child gender is select all that apply
+
+filtered_baseline_data %>%
+  count(dem_childethnicity) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_childinsurance) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Only asked if dem_childinsurance is Yes/1
+filtered_baseline_data %>%
+  count(dem_insurancetype) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Only asked if dem_childinsurance is Yes/1
+filtered_baseline_data %>%
+  count(dem_coverage) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_outofpocket) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>%
+  count(dem_childEDtx) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Only asked if dem_childEDtx is Yes/1
+filtered_baseline_data %>%
+  select(starts_with("dem_txtype")) %>% 
+  summarize(across(everything(), 
+                   list(n = ~ sum(. == 1),
+                        percent = ~ mean(. == 1) * 100))) #EDtx type is select all that apply
+
+filtered_baseline_data %>%
+  count(dem_medical) %>%
+  mutate(percent = (n / sum(n))*100)
+
+filtered_baseline_data %>% 
+  summarise(mean = mean(dem_admitlength, na.rm = TRUE),
+            sd = sd(dem_admitlength, na.rm = TRUE))
+
+filtered_baseline_data %>% 
+  summarise(mean = mean(dem_admitbmi, na.rm = TRUE),
+            sd = sd(dem_admitbmi, na.rm = TRUE))
+
+filtered_baseline_data %>%
+  select(starts_with("dem_psych")) %>% 
+  summarize(across(everything(), 
+                   list(n = ~ sum(. == 1),
+                        percent = ~ mean(. == 1) * 100))) #co-occuring psych is select all that apply
+```

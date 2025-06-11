@@ -7,16 +7,19 @@ editor: visual
 ```{r load packages and data}
 if(!require(readr)){install.packages('readr')}
 library(readr)
-if(!require(tidyverse)){install.packages('tidyverse')}
-library(tidyverse)
 if(!require(MOTE)){install.packages('MOTE')}
 library(MOTE)
+if(!require(tidyverse)){install.packages('tidyverse')}
+library(tidyverse) 
+if(!require(psych)){install.packages('psych')}
+library(psych)
 
 knitr::opts_knit$set(root.dir = "/Volumes/fsmresfiles/MSS/Schleider_Lab/jslab/Project Empower-ED")
 setwd("/Volumes/fsmresfiles/MSS/Schleider_Lab/jslab/Project Empower-ED")
 
 baseline_english <- read_csv("Data/baseline_english.csv", col_types = cols(.default = "c"))
 baseline_spanish <- read_csv("Data/baseline_spanish.csv", col_types = cols(.default = "c"))
+emr_data <- read_csv("Data/emr_data.csv", col_types = cols(.default = "c"))
 #When combining data, it is easiest to import everything as characters using readr and change specified variables to numeric later
 ```
 
@@ -39,6 +42,8 @@ included_participants$Participant_ID <- as.character(included_participants$Parti
 #Make a dataframe with just the included participants
 filtered_baseline_data <- included_participants %>%
   left_join(baseline_data, by = "Participant_ID", relationship = "one-to-one")
+filtered_baseline_data <- emr_data %>%
+  left_join(filtered_baseline_data, by = "Participant_ID", relationship = "one-to-one")
 ```
 
 ```{r transforming data}
@@ -64,12 +69,23 @@ transforming_txtype <- filtered_baseline_data %>%
   mutate(across(-Participant_ID, ~ as.factor(as.numeric(. != "0")))) %>% 
   rename_with(~ str_c("dem_txtype_", .), -Participant_ID)
 
+transforming_psych <- filtered_baseline_data %>% 
+  select(dem_psych, Participant_ID) %>%
+  separate_rows(dem_psych, sep = ",") %>%
+  pivot_wider(
+    names_from = dem_psych,
+    values_from = dem_psych,
+    values_fill = list(dem_psych = "0")) %>%
+  mutate(across(-Participant_ID, ~ as.factor(as.numeric(. != "0")))) %>% 
+  rename_with(~ str_c("dem_psych_", .), -Participant_ID)
+
 filtered_baseline_data <- filtered_baseline_data %>%
   left_join(transforming_childgender, by = "Participant_ID", relationship = "one-to-one") %>%
-  left_join(transforming_txtype, by = "Participant_ID", relationship = "one-to-one")
+  left_join(transforming_txtype, by = "Participant_ID", relationship = "one-to-one") %>%
+  left_join(transforming_psych, by = "Participant_ID", relationship = "one-to-one")
 
 filtered_baseline_data <- filtered_baseline_data %>% 
-  select(-dem_childgender, -dem_txtype)
+  select(-dem_childgender, -dem_txtype, -dem_psych)
 
 #Make all other necessary variables factors
 filtered_baseline_data <- filtered_baseline_data %>% 
@@ -79,7 +95,7 @@ filtered_baseline_data <- filtered_baseline_data %>%
 
 #And I need to make all necessary variables numeric
 filtered_baseline_data <- filtered_baseline_data %>%
-  mutate(across(c(pi_pfs_1:pi_pfs_7,  starts_with("dem_childage"), starts_with("dem_childgrade"),  starts_with("b_AED"), starts_with("b_PEDEQ"),  starts_with("b_PAS"),  starts_with("b_DTS"), starts_with("b_distressnow"), starts_with("pi_PAS"),  starts_with("pi_distressnow")),  
+  mutate(across(c(pi_pfs_1:pi_pfs_7,  starts_with("dem_childage"), starts_with("dem_childgrade"), starts_with("dem_admitlength"), starts_with("dem_admitbmi"), starts_with("b_AED"), starts_with("b_PEDEQ"),  starts_with("b_PAS"),  starts_with("b_DTS"), starts_with("b_distressnow"), starts_with("pi_PAS"),  starts_with("pi_distressnow")),  
                 as.numeric))
 ```
 
@@ -92,8 +108,5 @@ filtered_baseline_data <- filtered_baseline_data %>%
          pi_pfs_sum = pi_pfs_1 + pi_pfs_2 + pi_pfs_3 + pi_pfs_4 + pi_pfs_5 + pi_pfs_6 + pi_pfs_7)
 
 #Not summing the current distress items - look at each of those individually
-
-#I'm noticing problematic NAs for 4 rows of participants
-#2 seem to be due to incomplete measures - will likely drop 961945 and 744436 from PAS analysis (rather than impute)
-#2 seem to be due to incorrect IDs (655742 vs 908839; 392330 vs 788668)
+#Will need to drop 961945 and 744436 from PAS analysis due to missing data (rather than impute to get sum scores)
 ```
