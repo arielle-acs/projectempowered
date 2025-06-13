@@ -10,7 +10,45 @@ options(digits = 4)
 options(scipen = 999)
 ```
 
-```{r descriptive statistics}
+Contrary to how I originally set up the analyses, doing inferential statistics with this small of sample is questionable. For example, look at how large the SD is for SSI acceptability of the Spanish version:
+
+```{r example large SD}
+filtered_baseline_data %>%
+  filter(language == "Spanish") %>% 
+  summarize(
+    mean_total = mean(pi_pfs_sum),
+    sd_total = sd(pi_pfs_sum),
+    mean_item = mean_total / 7,
+    sd_item = sd_total / 7)
+```
+
+A related note on inferential statistics and sample size from the Project YES pre-registration: "We will compute within-group effect size values (Cohen’s d, including 95% confidence intervals) reflecting change in pre-SSI to post-SSI levels of each immediate post-SSI outcome variable (hopelessness, self-hate, agency) for youths and adults, separately, if pre- and post-SSI data are available for at least 30 youth and at least 30 adult participants overall. We will compute within group effect size values separately as a function of SSI if post-SSI data are available for at least 30 youth for that SSI selection and at least 30 adults for that SSI selection." (https://osf.io/e52p3)
+
+Another issue is that internal consistency for the Parent v Anorexia Scale is quite bad. Maybe this is because of the sample size and/or maybe the items don't conceptually make sense to sum (even with reverse scoring accounted for - others have reported below threshold internal consistency, see https://doi.org/10.1186/s40337-023-00869-x). It may be best to look at each item individually.
+
+```{r internal consistency}
+#The Parent vs Anorexia scale has very poor internal consistency
+b_PAS_df <- filtered_baseline_data %>%
+  select(b_PAS_1:b_PAS_7)
+  alpha(b_PAS_df)
+pi_PAS_df <- filtered_baseline_data %>%
+  select(pi_PAS_1:pi_PAS_7)
+  alpha(pi_PAS_df)
+  
+#Great internal consistency for the PEDEQ
+b_PEDEQ_df <- filtered_baseline_data %>%
+  select(b_PEDEQ_1, b_PEDEQ_2a, b_PEDEQ_3, b_PEDEQ_4, b_PEDEQ_5, b_PEDEQ_7, b_PEDEQ_9, b_PEDEQ_20, b_PEDEQ_22, b_PEDEQ_21, b_PEDEQ_6, b_PEDEQ_8, b_PEDEQ_10, b_PEDEQ_11, b_PEDEQ_24, b_PEDEQ_27, b_PEDEQ_28, b_PEDEQ_29, b_PEDEQ_12, b_PEDEQ_23, b_PEDEQ_25, b_PEDEQ_26) #only including the items that go into the global score
+alpha(b_PEDEQ_df)
+
+#Good internal consistnecy for DTS
+b_DTS_df <- filtered_baseline_data %>% 
+  select(b_DTS_1, b_DTS_2, b_DTS_3, b_DTS_4, b_DTS_5, b_DTS_6, b_DTS_7, b_DTS_8, b_DTS_9, b_DTS_10, b_DTS_11, b_DTS_12, b_DTS_13, b_DTS_14, b_DTS_15, b_DTS_16)
+alpha(b_DTS_df)
+```
+
+It may be more useful to focus on reporting counts/percentages and the individual trajectories that participants followed (e.g., plot each participant's individual scores, reliable change index for individual clinically significant changes). A caveat though is that we should check internal consistency for all measures before deciding if RCI is even appropriate (ie we probably do not want to do it with PvA sum scores to begin with)
+
+```{r descriptive statistics - overall sample, PVA summed}
 #Parent v anorexia scale overall
 PAS_stats <- filtered_baseline_data %>%
    drop_na(b_PAS_sum, pi_PAS_sum) %>%  #Two parents did not complete 
@@ -82,9 +120,52 @@ distressnow_2_stats_spanish <- filtered_baseline_data %>%
   mutate(distressnow_2_change_pre_post = pi_distressnow_2 - b_distressnow_2) %>%
   summarize(n = n(), 
             across(everything(),  list(mean = mean,  sd = sd))) 
+
+#DTS overall
+DTS_stats <- filtered_baseline_data %>%
+   drop_na(b_DTS_sum) %>%  #One parent did not complete 
+  select(b_DTS_sum) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#DTS English
+DTS_stats_english <- filtered_baseline_data %>%
+  filter(language == "English") %>%    
+  select(b_DTS_sum) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#DTS Spanish
+DTS_stats_spanish <- filtered_baseline_data %>%
+  filter(language == "Spanish") %>% 
+  drop_na(b_DTS_sum) %>% #One parent did not complete
+  select(b_DTS_sum) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#PEDEQ global overall
+P_EDEQ_stats <- filtered_baseline_data %>%
+  filter(!Participant_ID %in% missing_pedeq_ids) %>%  #Six parents did not complete
+  select(b_PEDEQ_global) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#PEDEQ global English
+PEDEQ_stats_english <- filtered_baseline_data %>%
+  filter(language == "English", !Participant_ID %in% missing_pedeq_ids) %>% #Four parents did not complete
+  select(b_PEDEQ_global) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+
+#PEDEQ global Spanish
+PEDEQ_stats_spanish <- filtered_baseline_data %>%
+  filter(language == "Spanish", !Participant_ID %in% missing_pedeq_ids) %>%  #Two parents did not complete
+  select(b_PEDEQ_global) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
 ```
 
-```{r pre to post outcomes}
+```{r pre to post outcomes - overall sample, PVA summed}
 #Parent v anorexia scale overall
 t.test(filtered_baseline_data$pi_PAS_sum, filtered_baseline_data$b_PAS_sum, paired = TRUE)
 d.dep.t.diff(mdiff = PAS_stats$PAS_sum_change_pre_post_mean,
@@ -110,7 +191,167 @@ d.dep.t.diff(mdiff = distressnow_2_stats$distressnow_2_change_pre_post_mean,
   pluck("estimate")
 ```
 
-```{r acceptability}
+```{r descriptive statistics and pre to post trajectory - individual level, PVA by item}
+
+###Current Distress###
+distress_now_1_individuals <- filtered_baseline_data %>% 
+  select(Participant_ID, 
+         language,
+         b_distressnow_1,
+         pi_distressnow_1)
+
+distress_now_1_individuals_long <- distress_now_1_individuals %>% 
+  pivot_longer(
+    cols = c(b_distressnow_1, pi_distressnow_1),
+    names_to  = "time",
+    values_to = "score") %>% 
+  mutate(
+    time = recode(time,
+                  b_distressnow_1  = "Pre",
+                  pi_distressnow_1 = "Post"),
+    time = factor(time, levels = c("Pre", "Post")),
+    item = "Item 1")
+
+distress_now_2_individuals <- filtered_baseline_data %>% 
+  select(Participant_ID, 
+         language,
+         b_distressnow_2,
+         pi_distressnow_2)
+
+distress_now_2_individuals_long <- distress_now_2_individuals %>% 
+  pivot_longer(
+    cols = c(b_distressnow_2, pi_distressnow_2),
+    names_to  = "time",
+    values_to = "score") %>% 
+  mutate(
+    time = recode(time,
+                  b_distressnow_2  = "Pre",
+                  pi_distressnow_2 = "Post"),
+    time = factor(time, levels = c("Pre", "Post")),
+    item = "Item 2")
+
+combined_distress_long <- bind_rows(distress_now_1_individuals_long, distress_now_2_individuals_long)
+
+ggplot(combined_distress_long,
+       aes(x = time, y = score,
+           group = interaction(Participant_ID, item),
+           color = language,
+           shape = item)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  facet_wrap(~ Participant_ID) +
+  theme_minimal(base_size = 10) +
+  labs(
+    x = NULL,
+    y = "Preparedness",
+    color = "Language",
+    shape = "Item",
+    title = "Pre-Post Preparedness to Manage Child's Distress"
+  ) +
+  scale_color_manual(values = c("English" = "steelblue", "Spanish" = "firebrick")) +
+  scale_y_continuous(limits = c(0, 5)) +
+  theme(strip.text = element_blank(),
+        panel.spacing = unit(1, "lines"))
+
+###Parent v Anorexia###
+b_PAS_individual <- filtered_baseline_data %>%
+  filter(!is.na(b_PAS_sum) & !is.na(pi_PAS_sum)) %>%  
+  select(Participant_ID, language, b_PAS_1:b_PAS_7) %>%
+  pivot_longer(
+    cols = starts_with("b_PAS_"),
+    names_to = "item",
+    values_to = "score"
+  ) %>%
+  mutate(
+    time = "Pre",
+    item = str_remove(item, "^b_PAS_"),
+    item = paste0("Item ", item))
+
+pi_PAS_individual <- filtered_baseline_data %>%
+  filter(!is.na(b_PAS_sum) & !is.na(pi_PAS_sum)) %>%  # Also here
+  select(Participant_ID, language, pi_PAS_1:pi_PAS_7) %>%
+  pivot_longer(
+    cols = starts_with("pi_PAS_"),
+    names_to = "item",
+    values_to = "score"
+  ) %>%
+  mutate(
+    time = "Post",
+    item = str_remove(item, "^pi_PAS_"),
+    item = paste0("Item ", item))
+
+combined_PAS_long <- bind_rows(b_PAS_individual, pi_PAS_individual) %>%
+  mutate(
+    time = factor(time, levels = c("Pre", "Post")),
+    item = factor(item, levels = paste0("Item ", 1:7)))
+
+ggplot(combined_PAS_long,
+       aes(x = time, y = score,
+           group  = interaction(Participant_ID, item),
+           color  = language,          
+           shape  = item)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  facet_wrap(~ Participant_ID) +
+  theme_minimal(base_size = 10) +
+  labs(
+    x = NULL,
+    y = "Self-Efficacy",
+    color = "Language",
+    shape = "Item",
+    title = "Pre-Post Parental Self-Efficacy"
+  ) +
+  scale_color_manual(values = c("English" = "steelblue",
+                                "Spanish" = "firebrick")) +
+  scale_shape_manual(values = 0:6) +  
+  scale_y_continuous(limits = c(0, 5)) +
+  theme(strip.text   = element_blank(),   
+        panel.spacing = unit(1, "lines"))
+
+###Distress Tolerance###
+
+#Plot of each participant's baseline distress tolerance scores
+filtered_baseline_data %>%
+  filter(!is.na(b_DTS_sum)) %>%
+  ggplot(aes(x = "", y = b_DTS_sum, color = language)) +
+  geom_jitter(width = 0.2, height = 0, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = NULL,
+    y = "Distress Tolerance Sum Score",
+    title = "Distress Tolerance by Participant",
+    color = "Language"
+  ) +
+  scale_color_manual(values = c("English" = "steelblue", "Spanish" = "firebrick")) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+###Parent EDEQ ###
+
+#Plot of each participant's baseline PEDEQ scores
+filtered_baseline_data %>%
+  filter(!Participant_ID %in% missing_pedeq_ids) %>%
+  ggplot(aes(x = "", y = b_PEDEQ_global, color = language)) +
+  geom_jitter(width = 0.2, height = 0, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = NULL,
+    y = "PEDE-Q Global Score",
+    title = "PEDE-Q by Participant",
+    color = "Language"
+  ) +
+  scale_color_manual(values = c("English" = "steelblue", "Spanish" = "firebrick")) +
+  scale_y_continuous(limits = c(0, 6), breaks = seq(0, 6, 1)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+```
+Really interesting and heterogeneous patterns for the PvA - I triple checked and all of the item (reverse) coding is correct such that higher scores are better. So maybe we are targeting some beliefs better than others (the pre-post increases)? Maybe even misrepresenting some ideas (the pre-post decreases)? Honestly, the direction for scoring some of these items conceptually confuses me / it's unlikely parents who completed Empower-ED would have learned this (e.g., item 5 - highest/best score is given when parent says "strongly agree" that their instincts should be trusted over expert advice )
+
+```{r acceptability - overall sample}
 #Acceptability total overall
 filtered_baseline_data %>%
   summarize(
@@ -162,6 +403,61 @@ filtered_baseline_data %>%
   group_by(name) %>%
   summarize(mean = mean(value), 
             sd = sd(value))
+```
+
+```{r acceptability - individual level}
+#Historgrams of acceptability ratings for each item
+pfs_long <- filtered_baseline_data %>%
+  filter(!is.na(pi_pfs_sum)) %>%
+  select(Participant_ID, language, pi_pfs_1:pi_pfs_7) %>%
+  pivot_longer(
+    cols = starts_with("pi_pfs_"),
+    names_to = "item",
+    values_to = "score"
+  ) %>%
+  mutate(
+    item = str_remove(item, "^pi_pfs_"),
+    item = paste0("Item ", item),
+    item = factor(item, levels = paste0("Item ", 1:7)))
+
+ggplot(pfs_long, aes(x = score, fill = language)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ item, ncol = 3) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Acceptability Score",
+    y = "Participant Count",
+    fill = "Language",
+    title = "Distribution of Acceptability Scores by Item"
+  ) +
+  scale_fill_manual(values = c("English" = "steelblue", "Spanish" = "firebrick")) +
+  scale_x_continuous(breaks = 1:5) + 
+  scale_y_continuous(breaks = seq(0, 25, 2)) +
+    theme(panel.spacing = unit(1, "lines"))
+
+#Plot of each participant's overall acceptability rating
+pfs_average_scores <- filtered_baseline_data %>%
+  filter(!is.na(pi_pfs_sum)) %>%
+  mutate(
+    acceptability_mean = pi_pfs_sum / 7
+  ) %>%
+  select(Participant_ID, language, acceptability_mean)
+
+ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = language)) +
+  geom_jitter(width = 0.2, height = 0, size = 3) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = NULL,
+    y = "Mean Acceptability Score",
+    title = "Overall Acceptability by Participant",
+    color = "Language"
+  ) +
+  scale_y_continuous(limits = c(1, 5), breaks = seq(1, 5, 0.5)) +
+  scale_color_manual(values = c("English" = "steelblue", "Spanish" = "firebrick")) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
 ```
 
 ```{r patterns of use}
