@@ -100,13 +100,41 @@ filtered_baseline_data <- filtered_baseline_data %>%
 ```
 
 ```{r sum scores}
-#All relevant items are already reverse-scored in Qualtrics. For now, just focusing on pre-post data.
+#All relevant items are already reverse-scored in Qualtrics. 
 
 filtered_baseline_data <- filtered_baseline_data %>%
   mutate(b_PAS_sum =  b_PAS_1 + b_PAS_2 + b_PAS_3 + b_PAS_4 + b_PAS_5 + b_PAS_6 + b_PAS_7,
          pi_PAS_sum = pi_PAS_1 + pi_PAS_2 + pi_PAS_3 + pi_PAS_4 + pi_PAS_5 + pi_PAS_6 + pi_PAS_7,
-         pi_pfs_sum = pi_pfs_1 + pi_pfs_2 + pi_pfs_3 + pi_pfs_4 + pi_pfs_5 + pi_pfs_6 + pi_pfs_7)
-
+         pi_pfs_sum = pi_pfs_1 + pi_pfs_2 + pi_pfs_3 + pi_pfs_4 + pi_pfs_5 + pi_pfs_6 + pi_pfs_7,
+         b_DTS_sum = b_DTS_1 + b_DTS_2 + b_DTS_3 + b_DTS_4 + b_DTS_5 + b_DTS_6 + b_DTS_7 + b_DTS_8 + b_DTS_9 + b_DTS_10 + b_DTS_11 + b_DTS_12 + b_DTS_13 + b_DTS_14 + b_DTS_15 + b_DTS_16,
+         b_PEDEQ_restraint = (b_PEDEQ_1 + b_PEDEQ_2a + b_PEDEQ_3 + b_PEDEQ_4 + b_PEDEQ_5) / 5,
+         b_PEDEQ_eatingconcern = (b_PEDEQ_7 + b_PEDEQ_9 + b_PEDEQ_20 + b_PEDEQ_22 + b_PEDEQ_21) / 5,
+         b_PEDEQ_shapeconcern = (b_PEDEQ_6 + b_PEDEQ_8 + b_PEDEQ_10 + b_PEDEQ_11 + b_PEDEQ_24 + b_PEDEQ_27 + b_PEDEQ_28 + b_PEDEQ_29) / 8,
+         b_PEDEQ_weightconcern = (b_PEDEQ_8 + b_PEDEQ_12 + b_PEDEQ_23 + b_PEDEQ_25 + b_PEDEQ_26) / 5,
+         b_PEDEQ_global = (b_PEDEQ_restraint + b_PEDEQ_eatingconcern + b_PEDEQ_shapeconcern + b_PEDEQ_weightconcern) / 4)
 #Not summing the current distress items - look at each of those individually
-#Will need to drop 961945 and 744436 from PAS analysis due to missing data (rather than impute to get sum scores)
+
+
+#Identify missing data
+missing_PAS <- filtered_baseline_data %>%
+  filter(if_any(c(b_PAS_1:b_PAS_7, pi_PAS_1:pi_PAS_7), is.na)) %>%
+  pull(Participant_ID)
+
+missing_DTS <- filtered_baseline_data %>%
+  filter(if_any(c(b_DTS_1:b_DTS_16), is.na)) %>%
+  pull(Participant_ID)
+
+missing_pedeq_ids <- filtered_baseline_data %>%
+  filter(if_any(c(
+    b_PEDEQ_1, b_PEDEQ_2a, b_PEDEQ_3, b_PEDEQ_4, b_PEDEQ_5, b_PEDEQ_7, 
+    b_PEDEQ_9, b_PEDEQ_20, b_PEDEQ_22, b_PEDEQ_21, b_PEDEQ_6, b_PEDEQ_8, 
+    b_PEDEQ_10, b_PEDEQ_11, b_PEDEQ_24, b_PEDEQ_27, b_PEDEQ_28, b_PEDEQ_29, 
+    b_PEDEQ_12, b_PEDEQ_23, b_PEDEQ_25, b_PEDEQ_26),
+    is.na) |
+    b_PEDEQ_global == 0) %>%
+  pull(Participant_ID)
+
+#Will need to drop 961945 and 744436 from PAS analysis due to missing data 
+#Will need to drop 744436 from DTS analysis due to missing data 
+#Will need to drop 744436, 961081, 7734501461, 7739367698, 269847, and 961945 for PEDEQ analysis due to missing data or all 0 scores 
 ```
