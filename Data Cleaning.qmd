@@ -2,6 +2,8 @@
 title: "Data Cleaning"
 format: html
 editor: visual
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r load packages and data}
@@ -34,12 +36,14 @@ baseline_spanish <- baseline_spanish %>%
 baseline_data <- bind_rows(baseline_english,  baseline_spanish)
 baseline_data$Participant_ID <- as.character(baseline_data$Participant_ID)
 
-#Identify included participants based on IDs in tracking document
+#The baseline data has some extra rows of participants that consented but then never completed the SSI, so we need to identify the participants that can actually be included in analysis
+
+##Identify included participants based on IDs in tracking document
 Participant_ID <- c(744436,7086469964,961081,7734501461,7739367698,937934,513324,269847,258529,542167,114943,774126,217386,271778,420465,118411,690997,655742,169397,644159,961945,728872,338524,721916,392330)
 included_participants <- data.frame(Participant_ID)
 included_participants$Participant_ID <- as.character(included_participants$Participant_ID)
 
-#Make a dataframe with just the included participants
+##Make a baseline dataframe with just the included participants
 filtered_baseline_data <- included_participants %>%
   left_join(baseline_data, by = "Participant_ID", relationship = "one-to-one")
 filtered_baseline_data <- emr_data %>%
@@ -47,7 +51,7 @@ filtered_baseline_data <- emr_data %>%
 ```
 
 ```{r transforming data}
-#The child gender and treatment history items include all responses from the multiple-select questions in one column. I need to separate them out in order to make them factors. (All other demographics items were made single choice for ease of analysis).
+#The child gender, treatment history, and comorbid psych items include all responses from the multiple-select questions in one column. I need to separate them out in order to make them factors. (All other demographics items were made single choice for ease of analysis).
 
 transforming_childgender <- filtered_baseline_data %>% 
   select(dem_childgender, Participant_ID) %>%
@@ -59,7 +63,7 @@ transforming_childgender <- filtered_baseline_data %>%
   mutate(across(-Participant_ID, ~ as.factor(as.numeric(. != "0")))) %>% 
   rename_with(~ str_c("dem_childgender_", .), -Participant_ID)
 
-transforming_txtype <- filtered_baseline_data %>% 
+transforming_txtype <- filtered_baseline_data  %>% 
   select(dem_txtype, Participant_ID) %>%
   separate_rows(dem_txtype, sep = ",") %>%
   pivot_wider(
@@ -69,7 +73,7 @@ transforming_txtype <- filtered_baseline_data %>%
   mutate(across(-Participant_ID, ~ as.factor(as.numeric(. != "0")))) %>% 
   rename_with(~ str_c("dem_txtype_", .), -Participant_ID)
 
-transforming_psych <- filtered_baseline_data %>% 
+transforming_psych <- filtered_baseline_data  %>% 
   select(dem_psych, Participant_ID) %>%
   separate_rows(dem_psych, sep = ",") %>%
   pivot_wider(
@@ -79,62 +83,47 @@ transforming_psych <- filtered_baseline_data %>%
   mutate(across(-Participant_ID, ~ as.factor(as.numeric(. != "0")))) %>% 
   rename_with(~ str_c("dem_psych_", .), -Participant_ID)
 
-filtered_baseline_data <- filtered_baseline_data %>%
+filtered_baseline_data  <- filtered_baseline_data  %>%
   left_join(transforming_childgender, by = "Participant_ID", relationship = "one-to-one") %>%
   left_join(transforming_txtype, by = "Participant_ID", relationship = "one-to-one") %>%
   left_join(transforming_psych, by = "Participant_ID", relationship = "one-to-one")
 
-filtered_baseline_data <- filtered_baseline_data %>% 
+filtered_baseline_data  <- filtered_baseline_data  %>% 
   select(-dem_childgender, -dem_txtype, -dem_psych)
 
 #Make all other necessary variables factors
-filtered_baseline_data <- filtered_baseline_data %>% 
+filtered_baseline_data  <- filtered_baseline_data  %>% 
   select(-contains("TEXT")) %>% 
   mutate(across(c(starts_with("dem_ethnicity"), starts_with("dem_relationship"), starts_with("dem_marital"), starts_with("dem_education"), starts_with("dem_caretaking"), starts_with("dem_live"), starts_with("dem_income"), starts_with("dem_familyhx"), starts_with("dem_childsex"), starts_with("dem_childethnicity"), starts_with("dem_childinsurance"), starts_with("dem_insurancetype"), starts_with("dem_coverage"), starts_with("dem_outofpocket"), starts_with("dem_childEDtx"),  starts_with("dem_medical")),
                 as.factor))
 
 #And I need to make all necessary variables numeric
-filtered_baseline_data <- filtered_baseline_data %>%
-  mutate(across(c(pi_pfs_1:pi_pfs_7,  starts_with("dem_childage"), starts_with("dem_childgrade"), starts_with("dem_admitlength"), starts_with("dem_admitbmi"), starts_with("b_AED"), starts_with("b_PEDEQ"),  starts_with("b_PAS"),  starts_with("b_DTS"), starts_with("b_distressnow"), starts_with("pi_PAS"),  starts_with("pi_distressnow")),  
+filtered_baseline_data  <- filtered_baseline_data  %>%
+  mutate(across(c(pi_pfs_1:pi_pfs_7,  contains("dem_childage"), contains("dem_childgrade"), contains("dem_admitlength"), contains("dem_admitbmi")),
                 as.numeric))
 ```
 
 ```{r sum scores}
 #All relevant items are already reverse-scored in Qualtrics. 
+filtered_baseline_data  <- filtered_baseline_data  %>%
+  mutate(pi_pfs_sum = pi_pfs_1 + pi_pfs_2 + pi_pfs_3 + pi_pfs_4 + pi_pfs_5 + pi_pfs_6 + pi_pfs_7)
+```
 
+
+```{r create additional stratification variables}
+#We already have language
+
+#ONCE WE REDO WITH INFO FROM CHART - We already have insurance type
+
+#We decided to stratify education by attended college and below vs graduated college and above, so need to dichotomize
 filtered_baseline_data <- filtered_baseline_data %>%
-  mutate(b_PAS_sum =  b_PAS_1 + b_PAS_2 + b_PAS_3 + b_PAS_4 + b_PAS_5 + b_PAS_6 + b_PAS_7,
-         pi_PAS_sum = pi_PAS_1 + pi_PAS_2 + pi_PAS_3 + pi_PAS_4 + pi_PAS_5 + pi_PAS_6 + pi_PAS_7,
-         pi_pfs_sum = pi_pfs_1 + pi_pfs_2 + pi_pfs_3 + pi_pfs_4 + pi_pfs_5 + pi_pfs_6 + pi_pfs_7,
-         b_DTS_sum = b_DTS_1 + b_DTS_2 + b_DTS_3 + b_DTS_4 + b_DTS_5 + b_DTS_6 + b_DTS_7 + b_DTS_8 + b_DTS_9 + b_DTS_10 + b_DTS_11 + b_DTS_12 + b_DTS_13 + b_DTS_14 + b_DTS_15 + b_DTS_16,
-         b_PEDEQ_restraint = (b_PEDEQ_1 + b_PEDEQ_2a + b_PEDEQ_3 + b_PEDEQ_4 + b_PEDEQ_5) / 5,
-         b_PEDEQ_eatingconcern = (b_PEDEQ_7 + b_PEDEQ_9 + b_PEDEQ_20 + b_PEDEQ_22 + b_PEDEQ_21) / 5,
-         b_PEDEQ_shapeconcern = (b_PEDEQ_6 + b_PEDEQ_8 + b_PEDEQ_10 + b_PEDEQ_11 + b_PEDEQ_24 + b_PEDEQ_27 + b_PEDEQ_28 + b_PEDEQ_29) / 8,
-         b_PEDEQ_weightconcern = (b_PEDEQ_8 + b_PEDEQ_12 + b_PEDEQ_23 + b_PEDEQ_25 + b_PEDEQ_26) / 5,
-         b_PEDEQ_global = (b_PEDEQ_restraint + b_PEDEQ_eatingconcern + b_PEDEQ_shapeconcern + b_PEDEQ_weightconcern) / 4)
-#Not summing the current distress items - look at each of those individually
+  mutate(
+    dem_education_dichotomized = case_when(
+      dem_education <= 4 ~ "Less Education",
+      dem_education >= 5 ~ "More Education"
+    ) %>%
+      factor(levels = c("Less Education", "More Education"))
+  )
 
-
-#Identify missing data
-missing_PAS <- filtered_baseline_data %>%
-  filter(if_any(c(b_PAS_1:b_PAS_7, pi_PAS_1:pi_PAS_7), is.na)) %>%
-  pull(Participant_ID)
-
-missing_DTS <- filtered_baseline_data %>%
-  filter(if_any(c(b_DTS_1:b_DTS_16), is.na)) %>%
-  pull(Participant_ID)
-
-missing_pedeq_ids <- filtered_baseline_data %>%
-  filter(if_any(c(
-    b_PEDEQ_1, b_PEDEQ_2a, b_PEDEQ_3, b_PEDEQ_4, b_PEDEQ_5, b_PEDEQ_7, 
-    b_PEDEQ_9, b_PEDEQ_20, b_PEDEQ_22, b_PEDEQ_21, b_PEDEQ_6, b_PEDEQ_8, 
-    b_PEDEQ_10, b_PEDEQ_11, b_PEDEQ_24, b_PEDEQ_27, b_PEDEQ_28, b_PEDEQ_29, 
-    b_PEDEQ_12, b_PEDEQ_23, b_PEDEQ_25, b_PEDEQ_26),
-    is.na) |
-    b_PEDEQ_global == 0) %>%
-  pull(Participant_ID)
-
-#Will need to drop 961945 and 744436 from PAS analysis due to missing data 
-#Will need to drop 744436 from DTS analysis due to missing data 
-#Will need to drop 744436, 961081, 7734501461, 7739367698, 269847, and 961945 for PEDEQ analysis due to missing data or all 0 scores 
+write.csv(filtered_baseline_data , "Data/filtered_baseline_data.csv")
 ```
