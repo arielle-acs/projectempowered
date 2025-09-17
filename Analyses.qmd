@@ -102,13 +102,49 @@ filtered_baseline_data %>%
   group_by(name) %>%
   summarize(mean = mean(value), 
             sd = sd(value))
+
+#Acceptability total Private Insurance
+filtered_baseline_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  summarize(
+    mean_total = mean(pi_pfs_sum),
+    sd_total = sd(pi_pfs_sum),
+    mean_item = mean_total / 7,
+    sd_item = sd_total / 7)
+
+#Acceptability by item Private Insurance
+filtered_baseline_data %>%
+   filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  select(pi_pfs_1:pi_pfs_7) %>%
+  pivot_longer(everything()) %>%
+  group_by(name) %>%
+  summarize(mean = mean(value), 
+            sd = sd(value))
+
+#Acceptability total Public Insurance
+filtered_baseline_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  summarize(
+    mean_total = mean(pi_pfs_sum),
+    sd_total = sd(pi_pfs_sum),
+    mean_item = mean_total / 7,
+    sd_item = sd_total / 7)
+
+#Acceptability by item Public Insurance
+filtered_baseline_data %>%
+   filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  select(pi_pfs_1:pi_pfs_7) %>%
+  pivot_longer(everything()) %>%
+  group_by(name) %>%
+  summarize(mean = mean(value), 
+            sd = sd(value))
 ```
 
 ```{r acceptability - individual level}
 #Historgrams of acceptability ratings for each item
 pfs_long <- filtered_baseline_data %>%
   filter(!is.na(pi_pfs_sum)) %>%
-  select(Participant_ID, language, dem_education_dichotomized, pi_pfs_1:pi_pfs_7) %>%
+  select(Participant_ID, language, dem_education_dichotomized, dem_insurancetype_emr, pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(
     cols = starts_with("pi_pfs_"),
     names_to = "item",
@@ -119,7 +155,7 @@ pfs_long <- filtered_baseline_data %>%
     item = paste0("Item ", item),
     item = factor(item, levels = paste0("Item ", 1:7)))
 
-pfs_long_by_item_plot <- ggplot(pfs_long, aes(x = score, fill = language)) +
+pfs_long_by_item_plot_language <- ggplot(pfs_long, aes(x = score, fill = language)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
   theme_minimal(base_size = 12) +
@@ -133,9 +169,9 @@ pfs_long_by_item_plot <- ggplot(pfs_long, aes(x = score, fill = language)) +
   scale_x_continuous(breaks = 1:5) + 
   scale_y_continuous(breaks = seq(0, 25, 2)) +
     theme(panel.spacing = unit(1, "lines"))
-#ggsave("~/Desktop/pfs_long_by_item_plot.png", plot = pfs_long_by_item_plot, width = 8, height = 6, units = "in", dpi = 300)
+ggsave("~/Desktop/pfs_long_by_item_plot_language.png", plot = pfs_long_by_item_plot_language, width = 8, height = 6, units = "in", dpi = 300)
 
-pfs_long_by_item_plot2 <- ggplot(pfs_long, aes(x = score, fill = dem_education_dichotomized)) +
+pfs_long_by_item_plot_education <- ggplot(pfs_long, aes(x = score, fill = dem_education_dichotomized)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
   theme_minimal(base_size = 12) +
@@ -149,6 +185,23 @@ pfs_long_by_item_plot2 <- ggplot(pfs_long, aes(x = score, fill = dem_education_d
   scale_x_continuous(breaks = 1:5) + 
   scale_y_continuous(breaks = seq(0, 25, 2)) +
     theme(panel.spacing = unit(1, "lines"))
+ggsave("~/Desktop/pfs_long_by_item_plot_education.png", plot = pfs_long_by_item_plot_education, width = 8, height = 6, units = "in", dpi = 300)
+
+pfs_long_by_item_plot_insurance <- ggplot(pfs_long, aes(x = score, fill = dem_insurancetype_emr)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ item, ncol = 3) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Acceptability Score",
+    y = "Participant Count",
+    fill = "Insurance Type",
+    title = "Distribution of Acceptability Scores by Item"
+  ) +
+  scale_fill_manual(values = c("Public Insurance" = "darkorchid4", "Private Insurance" = "cyan3")) +
+  scale_x_continuous(breaks = 1:5) + 
+  scale_y_continuous(breaks = seq(0, 25, 2)) +
+    theme(panel.spacing = unit(1, "lines"))
+ggsave("~/Desktop/pfs_long_by_item_plot_insurance.png", plot = pfs_long_by_item_plot_insurance, width = 8, height = 6, units = "in", dpi = 300)
 
 #Plot of each participant's overall acceptability rating
 pfs_average_scores <- filtered_baseline_data %>%
@@ -156,9 +209,9 @@ pfs_average_scores <- filtered_baseline_data %>%
   mutate(
     acceptability_mean = pi_pfs_sum / 7
   ) %>%
-  select(Participant_ID, language, dem_education_dichotomized, acceptability_mean)
+  select(Participant_ID, language, dem_education_dichotomized, dem_insurancetype_emr, acceptability_mean)
 
-pfs_average_scores_plot <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = language)) +
+pfs_average_scores_plot_language <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = language)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
     yintercept = mean(pfs_average_scores$acceptability_mean, na.rm = TRUE),
@@ -179,9 +232,9 @@ pfs_average_scores_plot <- ggplot(pfs_average_scores, aes(x = "", y = acceptabil
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   )
-#ggsave("~/Desktop/pfs_average_scores_plot.png", plot = pfs_average_scores_plot, width = 8, height = 6, units = "in", dpi = 300)
+ggsave("~/Desktop/pfs_average_scores_plot_language.png", plot = pfs_average_scores_plot_language, width = 8, height = 6, units = "in", dpi = 300)
 
-pfs_average_scores_plot2 <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = dem_education_dichotomized)) +
+pfs_average_scores_plot_education <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = dem_education_dichotomized)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
     yintercept = mean(pfs_average_scores$acceptability_mean, na.rm = TRUE),
@@ -202,28 +255,52 @@ pfs_average_scores_plot2 <- ggplot(pfs_average_scores, aes(x = "", y = acceptabi
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   )
+ggsave("~/Desktop/pfs_average_scores_plot_education.png", plot = pfs_average_scores_plot_education, width = 8, height = 6, units = "in", dpi = 300)
+
+pfs_average_scores_plot_insurance <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = dem_insurancetype_emr)) +
+  geom_jitter(width = 0.2, height = 0, size = 3) +
+   geom_hline(
+    yintercept = mean(pfs_average_scores$acceptability_mean, na.rm = TRUE),
+    linetype = "dashed",
+    color = "black",
+    size = 1
+  ) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = NULL,
+    y = "Mean Acceptability Score",
+    title = "Overall Acceptability by Participant",
+    color = "Insurance Type"
+  ) +
+  scale_y_continuous(limits = c(1, 5), breaks = seq(1, 5, 0.5)) +
+  scale_color_manual(values = c("Public Insurance" = "darkorchid4", "Private Insurance" = "cyan3")) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+ggsave("~/Desktop/pfs_average_scores_plot_insurance.png", plot = pfs_average_scores_plot_insurance, width = 8, height = 6, units = "in", dpi = 300)
 ```
 
 ```{r patterns of use}
 ###Completion of study activities###
 
-baseline_data %>% 
-  select(Participant_ID) %>% 
-  count()
+#baseline_data %>% 
+ # select(Participant_ID) %>% 
+ # count()
 filtered_baseline_data %>% 
   select(Participant_ID) %>% 
   count()
 #28 participants were invited, 25 were compensated/included per completion.
 
-baseline_data %>% 
-  filter(is.na(`Baseline Measures Complete`)) %>% 
-  count()
-baseline_data %>% 
-  filter(is.na(`Intervention Complete`)) %>% 
-  count()
-baseline_data %>% 
-  filter(is.na(`Post-Intervention Measures Complete`)) %>% 
-  count()
+#baseline_data %>% 
+#  filter(is.na(`Baseline Measures Complete`)) %>% 
+#  count()
+#baseline_data %>% 
+#  filter(is.na(`Intervention Complete`)) %>% 
+#  count()
+#baseline_data %>% 
+#  filter(is.na(`Post-Intervention Measures Complete`)) %>% 
+#  count()
 #The 3 participants who were not compensated/included consented but never completed the baseline measures, intervention, or post-intervention measures.
 
 filtered_baseline_data %>% 
@@ -387,21 +464,8 @@ filtered_baseline_data %>%
   count(dem_childethnicity) %>%
   mutate(percent = (n / sum(n))*100)
 
-##REDO - PULL FROM CHART##
 filtered_baseline_data %>%
-  count(dem_childinsurance) %>%
-  mutate(percent = (n / sum(n))*100)
-
-##REDO - PULL FROM CHART##
-#Only asked if dem_childinsurance is Yes/1
-filtered_baseline_data %>%
-  count(dem_insurancetype) %>%
-  mutate(percent = (n / sum(n))*100)
-
-##REDO - PULL FROM CHART##
-#Only asked if dem_childinsurance is Yes/1
-filtered_baseline_data %>%
-  count(dem_coverage) %>%
+  count(dem_insurancetype_emr) %>%
   mutate(percent = (n / sum(n))*100)
 
 filtered_baseline_data %>%

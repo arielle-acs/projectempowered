@@ -94,13 +94,20 @@ filtered_baseline_data  <- filtered_baseline_data  %>%
 #Make all other necessary variables factors
 filtered_baseline_data  <- filtered_baseline_data  %>% 
   select(-contains("TEXT")) %>% 
-  mutate(across(c(starts_with("dem_ethnicity"), starts_with("dem_relationship"), starts_with("dem_marital"), starts_with("dem_education"), starts_with("dem_caretaking"), starts_with("dem_live"), starts_with("dem_income"), starts_with("dem_familyhx"), starts_with("dem_childsex"), starts_with("dem_childethnicity"), starts_with("dem_childinsurance"), starts_with("dem_insurancetype"), starts_with("dem_coverage"), starts_with("dem_outofpocket"), starts_with("dem_childEDtx"),  starts_with("dem_medical")),
+  mutate(across(c(starts_with("dem_ethnicity"), starts_with("dem_relationship"), starts_with("dem_marital"), starts_with("dem_caretaking"), starts_with("dem_live"), starts_with("dem_income"), starts_with("dem_familyhx"), starts_with("dem_childsex"), starts_with("dem_childethnicity"), starts_with("dem_childinsurance"), starts_with("dem_insurancetype"), starts_with("dem_coverage"), starts_with("dem_outofpocket"), starts_with("dem_childEDtx"),  starts_with("dem_medical")),
                 as.factor))
 
 #And I need to make all necessary variables numeric
-filtered_baseline_data  <- filtered_baseline_data  %>%
-  mutate(across(c(pi_pfs_1:pi_pfs_7,  contains("dem_childage"), contains("dem_childgrade"), contains("dem_admitlength"), contains("dem_admitbmi")),
-                as.numeric))
+filtered_baseline_data <- filtered_baseline_data %>%
+  mutate(across(
+    c(pi_pfs_1:pi_pfs_7, 
+      contains("dem_childage"), 
+      contains("dem_childgrade"), 
+      contains("dem_admitlength"), 
+      contains("dem_admitbmi"), 
+      contains("dem_education")), 
+    as.numeric
+  ))
 ```
 
 ```{r sum scores}
@@ -120,10 +127,19 @@ filtered_baseline_data <- filtered_baseline_data %>%
   mutate(
     dem_education_dichotomized = case_when(
       dem_education <= 4 ~ "Less Education",
-      dem_education >= 5 ~ "More Education"
-    ) %>%
-      factor(levels = c("Less Education", "More Education"))
+      dem_education >= 5 ~ "More Education",
+      TRUE ~ NA_character_
+    ),
+    dem_education_dichotomized = factor(dem_education_dichotomized,
+                                        levels = c("Less Education", "More Education"))
   )
+
+#Also need to factor insurance type
+filtered_baseline_data$dem_insurancetype_emr <- factor(
+  filtered_baseline_data$dem_insurancetype_emr,
+  levels = c(0, 1),
+  labels = c("Private Insurance", "Public Insurance")
+)
 
 write.csv(filtered_baseline_data , "Data/filtered_baseline_data.csv")
 ```
