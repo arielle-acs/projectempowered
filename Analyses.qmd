@@ -10,13 +10,12 @@ editor_options:
 options(digits = 4)
 options(scipen = 999)
 
-filtered_baseline_data <- read_csv("Data/filtered_baseline_data.csv")
+all_data <- read_csv("Data/all_data.csv")
 ```
-
 
 ```{r acceptability}
 #Acceptability total overall
-filtered_baseline_data %>%
+all_data %>%
   summarize(
     mean_total = mean(pi_pfs_sum),
     sd_total = sd(pi_pfs_sum),
@@ -24,7 +23,7 @@ filtered_baseline_data %>%
     sd_item = sd_total / 7)
 
 #Acceptability by item overall
-filtered_baseline_data %>%
+all_data %>%
   select(pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(everything()) %>%
   group_by(name) %>%
@@ -32,7 +31,7 @@ filtered_baseline_data %>%
             sd = sd(value))
 
 #Acceptability total English
-filtered_baseline_data %>%
+all_data %>%
   filter(language == "English") %>% 
   summarize(
     mean_total = mean(pi_pfs_sum),
@@ -41,7 +40,7 @@ filtered_baseline_data %>%
     sd_item = sd_total / 7)
 
 #Acceptability by item English
-filtered_baseline_data %>%
+all_data %>%
    filter(language == "English") %>% 
   select(pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(everything()) %>%
@@ -50,7 +49,7 @@ filtered_baseline_data %>%
             sd = sd(value))
 
 #Acceptability total Spanish
-filtered_baseline_data %>%
+all_data %>%
   filter(language == "Spanish") %>% 
   summarize(
     mean_total = mean(pi_pfs_sum),
@@ -59,7 +58,7 @@ filtered_baseline_data %>%
     sd_item = sd_total / 7)
 
 #Acceptability by item Spanish
-filtered_baseline_data %>%
+all_data %>%
    filter(language == "Spanish") %>% 
   select(pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(everything()) %>%
@@ -68,7 +67,7 @@ filtered_baseline_data %>%
             sd = sd(value))
 
 #Acceptability total More Education
-filtered_baseline_data %>%
+all_data %>%
   filter(dem_education_dichotomized == "More Education") %>% 
   summarize(
     mean_total = mean(pi_pfs_sum),
@@ -77,7 +76,7 @@ filtered_baseline_data %>%
     sd_item = sd_total / 7)
 
 #Acceptability by item More Education
-filtered_baseline_data %>%
+all_data %>%
    filter(dem_education_dichotomized == "More Education") %>% 
   select(pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(everything()) %>%
@@ -86,7 +85,7 @@ filtered_baseline_data %>%
             sd = sd(value))
 
 #Acceptability total Less Education
-filtered_baseline_data %>%
+all_data %>%
   filter(dem_education_dichotomized == "Less Education") %>% 
   summarize(
     mean_total = mean(pi_pfs_sum),
@@ -95,7 +94,7 @@ filtered_baseline_data %>%
     sd_item = sd_total / 7)
 
 #Acceptability by item Less Education
-filtered_baseline_data %>%
+all_data %>%
    filter(dem_education_dichotomized == "Less Education") %>% 
   select(pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(everything()) %>%
@@ -104,7 +103,7 @@ filtered_baseline_data %>%
             sd = sd(value))
 
 #Acceptability total Private Insurance
-filtered_baseline_data %>%
+all_data %>%
   filter(dem_insurancetype_emr == "Private Insurance") %>% 
   summarize(
     mean_total = mean(pi_pfs_sum),
@@ -113,7 +112,7 @@ filtered_baseline_data %>%
     sd_item = sd_total / 7)
 
 #Acceptability by item Private Insurance
-filtered_baseline_data %>%
+all_data %>%
    filter(dem_insurancetype_emr == "Private Insurance") %>% 
   select(pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(everything()) %>%
@@ -122,7 +121,7 @@ filtered_baseline_data %>%
             sd = sd(value))
 
 #Acceptability total Public Insurance
-filtered_baseline_data %>%
+all_data %>%
   filter(dem_insurancetype_emr == "Public Insurance") %>% 
   summarize(
     mean_total = mean(pi_pfs_sum),
@@ -131,7 +130,7 @@ filtered_baseline_data %>%
     sd_item = sd_total / 7)
 
 #Acceptability by item Public Insurance
-filtered_baseline_data %>%
+all_data %>%
    filter(dem_insurancetype_emr == "Public Insurance") %>% 
   select(pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(everything()) %>%
@@ -142,7 +141,9 @@ filtered_baseline_data %>%
 
 ```{r acceptability - individual level}
 #Historgrams of acceptability ratings for each item
-pfs_long <- filtered_baseline_data %>%
+
+#Data setup
+pfs_long <- all_data %>%
   filter(!is.na(pi_pfs_sum)) %>%
   select(Participant_ID, language, dem_education_dichotomized, dem_insurancetype_emr, pi_pfs_1:pi_pfs_7) %>%
   pivot_longer(
@@ -155,6 +156,7 @@ pfs_long <- filtered_baseline_data %>%
     item = paste0("Item ", item),
     item = factor(item, levels = paste0("Item ", 1:7)))
 
+#Grouped by language
 pfs_long_by_item_plot_language <- ggplot(pfs_long, aes(x = score, fill = language)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
@@ -171,6 +173,7 @@ pfs_long_by_item_plot_language <- ggplot(pfs_long, aes(x = score, fill = languag
     theme(panel.spacing = unit(1, "lines"))
 ggsave("~/Desktop/pfs_long_by_item_plot_language.png", plot = pfs_long_by_item_plot_language, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by education
 pfs_long_by_item_plot_education <- ggplot(pfs_long, aes(x = score, fill = dem_education_dichotomized)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
@@ -187,6 +190,7 @@ pfs_long_by_item_plot_education <- ggplot(pfs_long, aes(x = score, fill = dem_ed
     theme(panel.spacing = unit(1, "lines"))
 ggsave("~/Desktop/pfs_long_by_item_plot_education.png", plot = pfs_long_by_item_plot_education, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by insurance type
 pfs_long_by_item_plot_insurance <- ggplot(pfs_long, aes(x = score, fill = dem_insurancetype_emr)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
@@ -204,13 +208,16 @@ pfs_long_by_item_plot_insurance <- ggplot(pfs_long, aes(x = score, fill = dem_in
 ggsave("~/Desktop/pfs_long_by_item_plot_insurance.png", plot = pfs_long_by_item_plot_insurance, width = 8, height = 6, units = "in", dpi = 300)
 
 #Plot of each participant's overall acceptability rating
-pfs_average_scores <- filtered_baseline_data %>%
+
+#Data setup
+pfs_average_scores <- all_data %>%
   filter(!is.na(pi_pfs_sum)) %>%
   mutate(
     acceptability_mean = pi_pfs_sum / 7
   ) %>%
   select(Participant_ID, language, dem_education_dichotomized, dem_insurancetype_emr, acceptability_mean)
 
+#Grouped by language
 pfs_average_scores_plot_language <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = language)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
@@ -234,6 +241,7 @@ pfs_average_scores_plot_language <- ggplot(pfs_average_scores, aes(x = "", y = a
   )
 ggsave("~/Desktop/pfs_average_scores_plot_language.png", plot = pfs_average_scores_plot_language, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by education
 pfs_average_scores_plot_education <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = dem_education_dichotomized)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
@@ -257,6 +265,7 @@ pfs_average_scores_plot_education <- ggplot(pfs_average_scores, aes(x = "", y = 
   )
 ggsave("~/Desktop/pfs_average_scores_plot_education.png", plot = pfs_average_scores_plot_education, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by insurance type
 pfs_average_scores_plot_insurance <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = dem_insurancetype_emr)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
@@ -282,47 +291,41 @@ ggsave("~/Desktop/pfs_average_scores_plot_insurance.png", plot = pfs_average_sco
 ```
 
 ```{r patterns of use}
-###Completion of study activities###
+#Completion of study activities (using participant database)
 
-#baseline_data %>% 
- # select(Participant_ID) %>% 
- # count()
-filtered_baseline_data %>% 
-  select(Participant_ID) %>% 
-  count()
-#28 participants were invited, 25 were compensated/included per completion.
+#Invited
+participant_database %>% 
+  filter(invite_status == "Complete") %>% 
+  count(invite_status) %>% 
+  mutate(percent = (n / sum(n)) * 100)
 
-#baseline_data %>% 
-#  filter(is.na(`Baseline Measures Complete`)) %>% 
-#  count()
-#baseline_data %>% 
-#  filter(is.na(`Intervention Complete`)) %>% 
-#  count()
-#baseline_data %>% 
-#  filter(is.na(`Post-Intervention Measures Complete`)) %>% 
-#  count()
-#The 3 participants who were not compensated/included consented but never completed the baseline measures, intervention, or post-intervention measures.
+#Baseline
+participant_database %>% 
+  filter(baseline_status == "Complete") %>% 
+  count(baseline_status) %>% 
+  mutate(percent = (n / 28) * 100)
 
-filtered_baseline_data %>% 
-  filter(is.na(`Baseline Measures Complete`)) %>% 
-  count()
-filtered_baseline_data %>% 
-  filter(is.na(`Intervention Complete`)) %>% 
-  count()
-filtered_baseline_data %>% 
-  filter(is.na(`Post-Intervention Measures Complete`)) %>% 
-  count()
-#Verifying that the 25 compensated/included participants passed all checkpoints (they did)
+#One-week follow-up
+participant_database %>% 
+  filter(oneweek_status == "Complete") %>% 
+  count(oneweek_status) %>% 
+  mutate(percent = (n / 28) * 100)
 
-###Duration of SSI###
+#Three-month follow-up
+participant_database %>% 
+  filter(threemonth_status == "Complete") %>% 
+  count(threemonth_status) %>% 
+  mutate(percent = (n / 28) * 100)
 
-##Without handling outliers
-names_in_order <- filtered_baseline_data %>%
+#Duration of SSI
+
+#Without handling outliers
+names_in_order <- all_data %>%
   select(ends_with("Page Submit")) %>%
   names()
 
 #Put mean duration and sd for each page into a new data frame
-page_durations <- filtered_baseline_data %>% 
+page_durations <- all_data %>% 
   select(ends_with("Page Submit")) %>%
     mutate(across(everything(), ~ as.numeric(as.character(.)))) %>%
   pivot_longer(cols = everything(),
@@ -340,12 +343,12 @@ mean_sd_durations <- page_durations %>%
             .groups = "drop") %>%
   mutate(mean_duration_minutes = mean_duration_seconds / 60,
          sd_duration_minutes = sd_duration_seconds / 60)
-mean_sd_durations #huge SD even larger than the mean
+View(mean_sd_durations) #huge SD even larger than the mean
 
-##With handling outliers
+#With handling outliers
 
 #Look for outliers 
-page_durations_long <- filtered_baseline_data %>% 
+page_durations_long <- all_data %>% 
   select(ends_with("Page Submit")) %>%
   mutate(across(everything(), ~ as.numeric(as.character(.)))) %>%
   pivot_longer(cols = everything(),
@@ -394,111 +397,417 @@ mean_sd_durations_no_outliers <- page_durations_no_outliers_summary %>%
     mean_duration_minutes = mean_duration_seconds / 60,
     sd_duration_minutes = sd_duration_seconds / 60
   )
-mean_sd_durations_no_outliers
+View(mean_sd_durations_no_outliers)
 ```
 
 ```{r demographics}
-filtered_baseline_data %>%
+all_data %>%
   count(dem_ethnicity) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_relationship) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_momdad) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_marital) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_education) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_caretaking) %>%
   mutate(percent = (n / sum(n))*100)
 
 #Only asked if dem_caretaking is Yes/1
-filtered_baseline_data %>%
+all_data %>%
   count(dem_live) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_income) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_familyhx) %>%
   mutate(percent = (n / sum(n))*100)
 
 #Age as categories
-filtered_baseline_data %>%
+all_data %>%
   count(dem_childage) %>%
   mutate(percent = (n / sum(n))*100)
 
 #Age as mean/SD
-filtered_baseline_data %>% 
+all_data %>% 
   summarise(mean = mean(dem_childage, na.rm = TRUE),
             sd = sd(dem_childage, na.rm = TRUE))
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_childgrade) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_childsex) %>%
   mutate(percent = (n / sum(n))*100)
 
-childgender_tibble <- filtered_baseline_data %>%
+childgender_tibble <- all_data %>%
   select(starts_with("dem_childgender")) %>% 
   summarize(across(everything(), 
                    list(n = ~ sum(. == 1),
                         percent = ~ mean(. == 1) * 100))) #child gender is select all that apply
 View(childgender_tibble)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_childethnicity) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_insurancetype_emr) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_outofpocket) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_childEDtx) %>%
   mutate(percent = (n / sum(n))*100)
 
 #Only asked if dem_childEDtx is Yes/1
-filtered_baseline_data %>%
+all_data %>%
   select(starts_with("dem_txtype")) %>% 
   summarize(across(everything(), 
                    list(n = ~ sum(. == 1),
                         percent = ~ mean(. == 1) * 100))) #EDtx type is select all that apply
 
-filtered_baseline_data %>%
+all_data %>%
   count(dem_medical) %>%
   mutate(percent = (n / sum(n))*100)
 
-filtered_baseline_data %>% 
-  summarise(mean = mean(dem_admitlength, na.rm = TRUE),
-            sd = sd(dem_admitlength, na.rm = TRUE))
-
-filtered_baseline_data %>% 
+all_data %>% 
   summarise(mean = mean(dem_admitbmi, na.rm = TRUE),
             sd = sd(dem_admitbmi, na.rm = TRUE))
 
-psych_tibble <- filtered_baseline_data %>%
+psych_tibble <- all_data %>%
   select(starts_with("dem_psych")) %>% 
   summarize(across(everything(), 
                    list(n = ~ sum(. == 1),
                         percent = ~ mean(. == 1) * 100))) #co-occuring psych is select all that apply
 View(psych_tibble)
+```
+
+```{r pre-post preparedness}
+#Item 1
+
+#Create new variables for the pre-post change and to indicate if it was greater than 1
+all_data <- all_data %>%
+  mutate(
+    distressnow_1_change_pre_post = pi_distressnow_1 - b_distressnow_1,
+    distressnow_1_change_1plus = distressnow_1_change_pre_post >= 1
+  )
+
+#Overall
+prepost1_overall <- all_data %>%
+  summarise(
+    n = n(),
+    across(c(b_distressnow_1, pi_distressnow_1, distressnow_1_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_1_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost1_overall)
+
+#English 
+prepost1_english <- all_data %>%
+   filter(language == "English") %>% 
+  summarise(
+    n = n(),
+    across(c(b_distressnow_1, pi_distressnow_1, distressnow_1_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_1_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost1_english)
+
+#Spanish
+prepost1_spanish <- all_data %>%
+   filter(language == "Spanish") %>% 
+summarise(
+    n = n(),
+    across(c(b_distressnow_1, pi_distressnow_1, distressnow_1_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_1_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100) 
+View(prepost1_spanish)
+
+#More Education
+prepost1_moreeducation <- all_data %>%
+  filter(dem_education_dichotomized == "More Education") %>% 
+   summarise(
+    n = n(),
+    across(c(b_distressnow_1, pi_distressnow_1, distressnow_1_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_1_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost1_moreeducation)
+
+#Less Education
+prepost1_lesseducation <- all_data %>%
+   filter(dem_education_dichotomized == "Less Education") %>% 
+ summarise(
+    n = n(),
+    across(c(b_distressnow_1, pi_distressnow_1, distressnow_1_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_1_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost1_lesseducation)
+
+#Private Insurance
+prepost1_private <- all_data %>%
+   filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  summarise(
+    n = n(),
+    across(c(b_distressnow_1, pi_distressnow_1, distressnow_1_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_1_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost1_private)
+
+#Public Insurance
+prepost1_public <- all_data %>%
+   filter(dem_insurancetype_emr == "Public Insurance") %>% 
+summarise(
+    n = n(),
+    across(c(b_distressnow_1, pi_distressnow_1, distressnow_1_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_1_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost1_public)
+
+#Item 2
+
+#Create new variables for the pre-post change and to indicate if it was greater than 1
+all_data <- all_data %>%
+  mutate(
+    distressnow_2_change_pre_post = pi_distressnow_2 - b_distressnow_2,
+    distressnow_2_change_1plus = distressnow_2_change_pre_post >= 1
+  )
+
+#Overall
+prepost2_overall <- all_data %>%
+  summarise(
+    n = n(),
+    across(c(b_distressnow_2, pi_distressnow_2, distressnow_2_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_2_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost2_overall)
+
+#English 
+prepost2_english <- all_data %>%
+   filter(language == "English") %>% 
+summarise(
+    n = n(),
+    across(c(b_distressnow_2, pi_distressnow_2, distressnow_2_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_2_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost2_english)
+
+#Spanish
+prepost2_spanish <- all_data %>%
+   filter(language == "Spanish") %>% 
+ summarise(
+    n = n(),
+    across(c(b_distressnow_2, pi_distressnow_2, distressnow_2_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_2_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost2_spanish)
+
+#More Education
+prepost2_moreeducation <- all_data %>%
+   filter(dem_education_dichotomized == "More Education") %>% 
+  summarise(
+    n = n(),
+    across(c(b_distressnow_2, pi_distressnow_2, distressnow_2_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_2_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost2_moreeducation)
+
+#Less Education
+prepost2_lesseducation <- all_data %>%
+   filter(dem_education_dichotomized == "Less Education") %>% 
+  summarise(
+    n = n(),
+    across(c(b_distressnow_2, pi_distressnow_2, distressnow_2_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_2_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost2_lesseducation)
+
+#Private Insurance
+prepost2_private <- all_data %>%
+   filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  summarise(
+    n = n(),
+    across(c(b_distressnow_2, pi_distressnow_2, distressnow_2_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_2_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost2_private)
+
+#Public Insurance
+prepost2_public <- all_data %>%
+   filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  summarise(
+    n = n(),
+    across(c(b_distressnow_2, pi_distressnow_2, distressnow_2_change_pre_post),
+           list(mean = mean, sd = sd), na.rm = TRUE),
+    n_change1plus = sum(distressnow_2_change_1plus, na.rm = TRUE),
+    percent_change1plus = (n_change1plus / n) * 100)
+View(prepost2_public)
+```
+
+```{r medical record followup data}
+#Overall
+all_data %>% 
+  summarise(mean = mean(admit_days, na.rm = TRUE),
+            sd = sd(admit_days, na.rm = TRUE))
+
+#Private Insurance
+all_data %>% 
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  summarise(mean = mean(admit_days, na.rm = TRUE),
+            sd = sd(admit_days, na.rm = TRUE))
+
+#Public Insurance
+all_data %>% 
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  summarise(mean = mean(admit_days, na.rm = TRUE),
+            sd = sd(admit_days, na.rm = TRUE))
+
+#Overall
+all_data %>%
+  count(twowk_medical_followup) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Private Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  count(twowk_medical_followup) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Public Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  count(twowk_medical_followup) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Overall
+all_data %>%
+  count(twowk_medical_weight) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Private Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  count(twowk_medical_weight) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Public Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  count(twowk_medical_weight) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Overall
+all_data %>%
+  count(threemo_medical_followup) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Private Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  count(threemo_medical_followup) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Public Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  count(threemo_medical_followup) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Overall
+all_data %>%
+  count(threemo_medical_weight) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Private Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  count(threemo_medical_weight) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Public Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  count(threemo_medical_weight) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Overall
+all_data %>%
+  count(twowk_mentalhealth) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Private Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  count(twowk_mentalhealth) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Public Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  count(twowk_mentalhealth) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Overall
+all_data %>%
+  count(threemo_mentalhealth) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Private Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  count(threemo_mentalhealth) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Public Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  count(threemo_mentalhealth) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Overall
+all_data %>%
+  count(sixmo_readmit) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Private Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Private Insurance") %>% 
+  count(sixmo_readmit) %>%
+  mutate(percent = (n / sum(n))*100)
+
+#Public Insurance
+all_data %>%
+  filter(dem_insurancetype_emr == "Public Insurance") %>% 
+  count(sixmo_readmit) %>%
+  mutate(percent = (n / sum(n))*100)
 ```
