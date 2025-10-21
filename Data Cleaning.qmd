@@ -24,7 +24,7 @@ baseline_spanish <- read_csv("Data/baseline_spanish.csv", col_types = cols(.defa
 baseline_emr_data <- read_csv("Data/emr_data.csv", col_types = cols(.default = "c"))
 followup_emr_data <- read_csv("Data/followup_emr_data.csv", col_types = cols(.default = "c"))
 participant_database <- read_csv("Data/participant_database.csv", col_types = cols(.default = "c"))
-#When combining data, it is easiest to import everything as characters using readr and change specified variables to numeric later
+#When combining data, it is easiest to import everything as characters using readr and change to specific variable classes later
 ```
 
 ```{r merge data}
@@ -59,11 +59,11 @@ included_participants$Participant_ID <- as.character(included_participants$Parti
 filtered_baseline_data <- included_participants %>%
   left_join(baseline_data, by = "Participant_ID", relationship = "one-to-one")
 
-#Attach dataframe with baseline electronic medical records data
+#Attach new dataframe with baseline electronic medical records data
 filtered_baseline_data_with_emr <- baseline_emr_data %>%
   left_join(filtered_baseline_data, by = "Participant_ID", relationship = "one-to-one")
 
-#Attach dataframe with follow-up electronic medical records data
+#Attach new dataframe with follow-up electronic medical records data
 all_data <- followup_emr_data %>%
   left_join(filtered_baseline_data_with_emr, by = "Participant_ID", relationship = "one-to-one")
 ```

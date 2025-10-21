@@ -141,6 +141,8 @@ all_data %>%
 
 ```{r acceptability - individual level}
 #Historgrams of acceptability ratings for each item
+
+#Data setup
 pfs_long <- all_data %>%
   filter(!is.na(pi_pfs_sum)) %>%
   select(Participant_ID, language, dem_education_dichotomized, dem_insurancetype_emr, pi_pfs_1:pi_pfs_7) %>%
@@ -154,6 +156,7 @@ pfs_long <- all_data %>%
     item = paste0("Item ", item),
     item = factor(item, levels = paste0("Item ", 1:7)))
 
+#Grouped by language
 pfs_long_by_item_plot_language <- ggplot(pfs_long, aes(x = score, fill = language)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
@@ -170,6 +173,7 @@ pfs_long_by_item_plot_language <- ggplot(pfs_long, aes(x = score, fill = languag
     theme(panel.spacing = unit(1, "lines"))
 ggsave("~/Desktop/pfs_long_by_item_plot_language.png", plot = pfs_long_by_item_plot_language, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by education
 pfs_long_by_item_plot_education <- ggplot(pfs_long, aes(x = score, fill = dem_education_dichotomized)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
@@ -186,6 +190,7 @@ pfs_long_by_item_plot_education <- ggplot(pfs_long, aes(x = score, fill = dem_ed
     theme(panel.spacing = unit(1, "lines"))
 ggsave("~/Desktop/pfs_long_by_item_plot_education.png", plot = pfs_long_by_item_plot_education, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by insurance type
 pfs_long_by_item_plot_insurance <- ggplot(pfs_long, aes(x = score, fill = dem_insurancetype_emr)) +
   geom_bar(position = "dodge") +
   facet_wrap(~ item, ncol = 3) +
@@ -203,6 +208,8 @@ pfs_long_by_item_plot_insurance <- ggplot(pfs_long, aes(x = score, fill = dem_in
 ggsave("~/Desktop/pfs_long_by_item_plot_insurance.png", plot = pfs_long_by_item_plot_insurance, width = 8, height = 6, units = "in", dpi = 300)
 
 #Plot of each participant's overall acceptability rating
+
+#Data setup
 pfs_average_scores <- all_data %>%
   filter(!is.na(pi_pfs_sum)) %>%
   mutate(
@@ -210,6 +217,7 @@ pfs_average_scores <- all_data %>%
   ) %>%
   select(Participant_ID, language, dem_education_dichotomized, dem_insurancetype_emr, acceptability_mean)
 
+#Grouped by language
 pfs_average_scores_plot_language <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = language)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
@@ -233,6 +241,7 @@ pfs_average_scores_plot_language <- ggplot(pfs_average_scores, aes(x = "", y = a
   )
 ggsave("~/Desktop/pfs_average_scores_plot_language.png", plot = pfs_average_scores_plot_language, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by education
 pfs_average_scores_plot_education <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = dem_education_dichotomized)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
@@ -256,6 +265,7 @@ pfs_average_scores_plot_education <- ggplot(pfs_average_scores, aes(x = "", y = 
   )
 ggsave("~/Desktop/pfs_average_scores_plot_education.png", plot = pfs_average_scores_plot_education, width = 8, height = 6, units = "in", dpi = 300)
 
+#Grouped by insurance type
 pfs_average_scores_plot_insurance <- ggplot(pfs_average_scores, aes(x = "", y = acceptability_mean, color = dem_insurancetype_emr)) +
   geom_jitter(width = 0.2, height = 0, size = 3) +
    geom_hline(
@@ -333,7 +343,7 @@ mean_sd_durations <- page_durations %>%
             .groups = "drop") %>%
   mutate(mean_duration_minutes = mean_duration_seconds / 60,
          sd_duration_minutes = sd_duration_seconds / 60)
-mean_sd_durations #huge SD even larger than the mean
+View(mean_sd_durations) #huge SD even larger than the mean
 
 #With handling outliers
 
@@ -387,7 +397,7 @@ mean_sd_durations_no_outliers <- page_durations_no_outliers_summary %>%
     mean_duration_minutes = mean_duration_seconds / 60,
     sd_duration_minutes = sd_duration_seconds / 60
   )
-mean_sd_durations_no_outliers
+View(mean_sd_durations_no_outliers)
 ```
 
 ```{r demographics}
@@ -479,10 +489,6 @@ all_data %>%
 all_data %>%
   count(dem_medical) %>%
   mutate(percent = (n / sum(n))*100)
-
-all_data %>% 
-  summarise(mean = mean(dem_admitlength, na.rm = TRUE),
-            sd = sd(dem_admitlength, na.rm = TRUE))
 
 all_data %>% 
   summarise(mean = mean(dem_admitbmi, na.rm = TRUE),
