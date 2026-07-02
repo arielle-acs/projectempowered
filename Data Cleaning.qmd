@@ -22,7 +22,6 @@ setwd("/Volumes/fsmresfiles/MSS/Schleider_Lab/jslab/Project Empower-ED")
 baseline_english <- read_csv("Data/baseline_english.csv", col_types = cols(.default = "c"))
 baseline_spanish <- read_csv("Data/baseline_spanish.csv", col_types = cols(.default = "c"))
 baseline_emr_data <- read_csv("Data/emr_data.csv", col_types = cols(.default = "c"))
-followup_emr_data <- read_csv("Data/followup_emr_data.csv", col_types = cols(.default = "c"))
 participant_database <- read_csv("Data/participant_database.csv", col_types = cols(.default = "c"))
 #When combining data, it is easiest to import everything as characters using readr and change to specific variable classes later
 ```
@@ -63,9 +62,8 @@ filtered_baseline_data <- included_participants %>%
 filtered_baseline_data_with_emr <- baseline_emr_data %>%
   left_join(filtered_baseline_data, by = "Participant_ID", relationship = "one-to-one")
 
-#Attach new dataframe with follow-up electronic medical records data
-all_data <- followup_emr_data %>%
-  left_join(filtered_baseline_data_with_emr, by = "Participant_ID", relationship = "one-to-one")
+#Label completed dataframe accordingly
+all_data <- filtered_baseline_data_with_emr
 ```
 
 ```{r transforming data}
@@ -127,14 +125,7 @@ all_data <- all_data %>%
         contains("dem_coverage"),
         contains("dem_outofpocket"),
         contains("dem_childEDtx"),
-        contains("dem_medical"),
-        contains("twowk_medical_followup"),
-        contains("twowk_medical_weight"),
-        contains("threemo_medical_followup"),
-        contains("threemo_medical_weight"),
-        contains("twowk_mentalhealth"),
-        contains("threemo_mentalhealth"),
-        contains("sixmo_readmit")),
+        contains("dem_medical")),
       as.factor))
 
 all_data$dem_insurancetype_emr <- factor(
