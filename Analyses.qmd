@@ -827,6 +827,10 @@ alpha(b_PEDEQ_df)
 b_DTS_df <- all_data %>% 
   select(b_DTS_1, b_DTS_2, b_DTS_3, b_DTS_4, b_DTS_5, b_DTS_6, b_DTS_7, b_DTS_8, b_DTS_9, b_DTS_10, b_DTS_11, b_DTS_12, b_DTS_13, b_DTS_14, b_DTS_15, b_DTS_16)
 alpha(b_DTS_df)
+
+pi_pfs_df <- all_data %>% 
+  select(pi_pfs_1, pi_pfs_2, pi_pfs_3, pi_pfs_4, pi_pfs_5, pi_pfs_6, pi_pfs_7)
+alpha(pi_pfs_df)
 ```
 
 ```{r descriptives for other measures}
