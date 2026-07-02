@@ -811,3 +811,44 @@ all_data %>%
   count(sixmo_readmit) %>%
   mutate(percent = (n / sum(n))*100)
 ```
+
+```{r internal consistency calculations including for excluded measures}
+b_PAS_df <- all_data %>%
+  select(b_PAS_1:b_PAS_7)
+  alpha(b_PAS_df)
+pi_PAS_df <- all_data %>%
+  select(pi_PAS_1:pi_PAS_7)
+  alpha(pi_PAS_df)
+  
+b_PEDEQ_df <- all_data %>%
+  select(b_PEDEQ_1, b_PEDEQ_2a, b_PEDEQ_3, b_PEDEQ_4, b_PEDEQ_5, b_PEDEQ_7, b_PEDEQ_9, b_PEDEQ_20, b_PEDEQ_22, b_PEDEQ_21, b_PEDEQ_6, b_PEDEQ_8, b_PEDEQ_10, b_PEDEQ_11, b_PEDEQ_24, b_PEDEQ_27, b_PEDEQ_28, b_PEDEQ_29, b_PEDEQ_12, b_PEDEQ_23, b_PEDEQ_25, b_PEDEQ_26) #only including the items that go into the global score
+alpha(b_PEDEQ_df)
+
+b_DTS_df <- all_data %>% 
+  select(b_DTS_1, b_DTS_2, b_DTS_3, b_DTS_4, b_DTS_5, b_DTS_6, b_DTS_7, b_DTS_8, b_DTS_9, b_DTS_10, b_DTS_11, b_DTS_12, b_DTS_13, b_DTS_14, b_DTS_15, b_DTS_16)
+alpha(b_DTS_df)
+```
+
+```{r descriptives for other measures}
+DTS_stats <- all_data %>%
+   drop_na(b_DTS_sum) %>%  #One parent did not complete 
+  select(b_DTS_sum) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+#Will include to characterize sample
+
+PEDEQ_stats <- all_data %>%
+   drop_na( b_PEDEQ_global) %>%  #Five parents did not complete 
+  select( b_PEDEQ_global) %>% 
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+#Mean is lower than the generally observed clinical cutoff, yet these patients are hospitalized, suggesting problems with parent-report and/or measure comprehensibility 
+
+PAS_stats <- all_data %>%
+   drop_na(b_PAS_sum, pi_PAS_sum) %>%  #Two parents did not complete 
+  select(b_PAS_sum, pi_PAS_sum) %>%
+  mutate(PAS_sum_change_pre_post = pi_PAS_sum - b_PAS_sum) %>%
+  summarize(n = n(), 
+            across(everything(),  list(mean = mean,  sd = sd))) 
+#Even though we have this data, not a good idea to interpret the PAS given incredibly poor internal consistency
+```
